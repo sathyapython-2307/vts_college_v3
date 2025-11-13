@@ -10,9 +10,9 @@ services:
     env: python
     plan: free
     buildCommand: "./build.sh"
-  # Run migrations and collectstatic at startup to ensure the DB is initialized
-  # before starting Gunicorn. This avoids runtime errors like missing tables.
-  startCommand: "python manage.py migrate --no-input && python manage.py collectstatic --no-input && gunicorn --bind 0.0.0.0:$PORT Online_Course.wsgi:application --timeout 120 --workers 4"
+  # Use a dedicated startup script to run migrations/collectstatic and then
+  # exec gunicorn. This is easier to maintain and forwards signals correctly.
+  startCommand: "./start.sh"
     envVars:
       - key: DATABASE_URL
         fromDatabase:

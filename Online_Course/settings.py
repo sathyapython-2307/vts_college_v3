@@ -67,12 +67,16 @@ else:
 DEBUG = os.environ.get('DEBUG', 'False').lower() == 'true'
 
 # Parse ALLOWED_HOSTS from environment variable or use defaults
-ALLOWED_HOSTS_STR = os.environ.get('ALLOWED_HOSTS', 'localhost,127.0.0.1,testserver')
-ALLOWED_HOSTS = [h.strip() for h in ALLOWED_HOSTS_STR.split(',')]
+ALLOWED_HOSTS_STR = os.environ.get('ALLOWED_HOSTS', '')
+if ALLOWED_HOSTS_STR:
+    ALLOWED_HOSTS = [h.strip() for h in ALLOWED_HOSTS_STR.split(',') if h.strip()]
+else:
+    ALLOWED_HOSTS = ['localhost', '127.0.0.1', 'testserver']
 
-# Add Render domain
-if os.environ.get('RENDER_EXTERNAL_HOSTNAME'):
-    ALLOWED_HOSTS.append(os.environ.get('RENDER_EXTERNAL_HOSTNAME'))
+# Add Render domain if present
+RENDER_HOSTNAME = os.environ.get('RENDER_EXTERNAL_HOSTNAME')
+if RENDER_HOSTNAME:
+    ALLOWED_HOSTS.append(RENDER_HOSTNAME)
 
 # Application definition
 INSTALLED_APPS = [
@@ -150,8 +154,18 @@ SECURE_SSL_REDIRECT = not DEBUG
 SECURE_HSTS_SECONDS = 31536000 if not DEBUG else 0  # 1 year in production
 SECURE_HSTS_INCLUDE_SUBDOMAINS = not DEBUG
 SECURE_HSTS_PRELOAD = not DEBUG
+# Session & CSRF cookie security
 SESSION_COOKIE_SECURE = not DEBUG
 CSRF_COOKIE_SECURE = not DEBUG
+
+# If the app is behind a proxy (like Render's router), trust the X-Forwarded-Proto header
+# so Django can infer the original scheme and correctly build redirect URLs.
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
+# Add Render hostname to CSRF trusted origins so CSRF checks succeed for HTTPS requests
+CSRF_TRUSTED_ORIGINS = []
+if RENDER_HOSTNAME:
+    CSRF_TRUSTED_ORIGINS.append(f'https://{RENDER_HOSTNAME}')
 
 # Additional security settings
 SECURE_BROWSER_XSS_FILTER = not DEBUG
