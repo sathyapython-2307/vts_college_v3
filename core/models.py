@@ -499,6 +499,26 @@ class CourseScheduleItem(models.Model):
     def __str__(self):
         return f"{self.day.course.name} - {self.day.title} - {self.title}"
 
+
+class VideoPlay(models.Model):
+    """Records each time a user plays a specific course video item.
+
+    A single row per (user, course_item) is stored. The existence of a
+    VideoPlay row indicates the user has played that specific item at least once.
+    """
+    user = models.ForeignKey('auth.User', on_delete=models.CASCADE, related_name='video_plays')
+    course_item = models.ForeignKey(CourseScheduleItem, on_delete=models.CASCADE, related_name='plays')
+    played_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('user', 'course_item')
+        verbose_name = 'Video Play'
+        verbose_name_plural = 'Video Plays'
+
+    def __str__(self):
+        return f"{self.user} - {self.course_item} @ {self.played_at.isoformat()}"
+
+
 class CourseInstructor(models.Model):
     course = models.ForeignKey(Course, on_delete=models.CASCADE)
     instructor = models.ForeignKey(Instructor, on_delete=models.CASCADE)
@@ -583,6 +603,9 @@ class CourseProgress(models.Model):
     course_access = models.OneToOneField(CourseAccess, on_delete=models.CASCADE, related_name='_progress')
     progress_percentage = models.DecimalField(max_digits=5, decimal_places=2, default=0.0)
     completed_lessons = models.JSONField(default=list)
+    # New flag: user has played every video in the course at least once
+    ready_for_exam = models.BooleanField(default=False, help_text='Set when user has played all course videos at least once')
+    ready_for_exam_date = models.DateTimeField(null=True, blank=True)
     is_completed = models.BooleanField(default=False)
     completion_date = models.DateTimeField(null=True, blank=True)
     last_accessed = models.DateTimeField(auto_now=True)
@@ -693,3 +716,123 @@ class CoursePurchaseCard(models.Model):
         if not self.title:
             self.title = self.course.name
         super().save(*args, **kwargs)
+
+
+# ============ EXAM SYSTEM MODELS ============
+
+class CourseExam(models.Model):
+    """Exam linked to a Course; stores configuration."""
+    course = models.OneToOneField(Course, on_delete=models.CASCADE, related_name='exam')
+    title = models.CharField(max_length=200, default='Course Final Exam')
+    description = models.TextField(blank=True, null=True)
+    duration_minutes = models.IntegerField(default=180, help_text='Exam duration in minutes (default 3 hours)')
+    passing_score = models.IntegerField(default=80, help_text='Minimum percentage score to pass')
+    max_attempts = models.IntegerField(default=3, help_text='Maximum number of attempts allowed')
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = 'Course Exam'
+        verbose_name_plural = 'Course Exams'
+
+    def __str__(self):
+        return f'{self.course.name} - {self.title}'
+
+
+class ExamQuestion(models.Model):
+    """Individual MCQ for the exam."""
+    exam = models.ForeignKey(CourseExam, on_delete=models.CASCADE, related_name='questions')
+    question_text = models.TextField(help_text='The question')
+    option_a = models.CharField(max_length=500, help_text='Option A')
+    option_b = models.CharField(max_length=500, help_text='Option B')
+    option_c = models.CharField(max_length=500, help_text='Option C')
+    option_d = models.CharField(max_length=500, help_text='Option D')
+    correct_answer = models.CharField(max_length=1, choices=[('A', 'A'), ('B', 'B'), ('C', 'C'), ('D', 'D')])
+    explanation = models.TextField(blank=True, null=True, help_text='Optional explanation shown after exam submission')
+    order = models.PositiveIntegerField(default=0)
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['order']
+        verbose_name = 'Exam Question'
+        verbose_name_plural = 'Exam Questions'
+
+    def __str__(self):
+        return f'Q{self.order}: {self.question_text[:50]}'
+
+
+class ExamAttempt(models.Model):
+    """Tracks user's exam attempts."""
+    course_access = models.ForeignKey(CourseAccess, on_delete=models.CASCADE, related_name='exam_attempts')
+    attempt_number = models.PositiveIntegerField(default=1)
+    started_at = models.DateTimeField(auto_now_add=True)
+    submitted_at = models.DateTimeField(null=True, blank=True)
+    time_taken_seconds = models.IntegerField(null=True, blank=True)
+    is_submitted = models.BooleanField(default=False)
+    is_passed = models.BooleanField(null=True, blank=True, help_text='True if score >= passing_score')
+    score_percentage = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
+    correct_answers = models.IntegerField(default=0)
+    total_questions = models.IntegerField(default=0)
+    has_violations = models.BooleanField(default=False, help_text='True if any violations were detected')
+    violation_count = models.IntegerField(default=0, help_text='Total number of violations recorded')
+    duration_minutes = models.IntegerField(default=150, help_text='Duration in minutes for this attempt (snapshot at creation time)')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-started_at']
+        unique_together = ['course_access', 'attempt_number']
+        verbose_name = 'Exam Attempt'
+        verbose_name_plural = 'Exam Attempts'
+
+    def __str__(self):
+        return f'{self.course_access.user.email} - {self.course_access.course.name} - Attempt {self.attempt_number}'
+
+
+class ExamAnswer(models.Model):
+    """User's answer to a specific question in an attempt."""
+    attempt = models.ForeignKey(ExamAttempt, on_delete=models.CASCADE, related_name='answers')
+    question = models.ForeignKey(ExamQuestion, on_delete=models.CASCADE)
+    selected_answer = models.CharField(max_length=1, choices=[('A', 'A'), ('B', 'B'), ('C', 'C'), ('D', 'D'), ('', 'Not answered')])
+    is_correct = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ['attempt', 'question']
+        verbose_name = 'Exam Answer'
+        verbose_name_plural = 'Exam Answers'
+
+    def __str__(self):
+        return f'{self.attempt} - Q{self.question.order}'
+
+
+class ExamViolation(models.Model):
+    """Tracks security violations during exams."""
+    VIOLATION_TYPES = [
+        ('right_click', 'Right-Click Attempted'),
+        ('copy_paste', 'Copy/Paste Attempted'),
+        ('dev_tools', 'Developer Tools Opened'),
+        ('tab_switch', 'Tab/Window Switch'),
+        ('back_button', 'Back Button Navigation'),
+        ('fullscreen_exit', 'Fullscreen Exited'),
+        ('other', 'Other Violation'),
+    ]
+    
+    attempt = models.ForeignKey(ExamAttempt, on_delete=models.CASCADE, related_name='violations')
+    violation_type = models.CharField(max_length=20, choices=VIOLATION_TYPES)
+    violation_count = models.PositiveIntegerField(default=1, help_text='Number of times this violation occurred')
+    description = models.TextField(blank=True, help_text='Additional details about the violation')
+    recorded_at = models.DateTimeField(auto_now_add=True)
+    auto_submitted = models.BooleanField(default=False, help_text='True if exam was auto-submitted due to this violation')
+    
+    class Meta:
+        ordering = ['-recorded_at']
+        unique_together = [('attempt', 'violation_type')]
+        verbose_name = 'Exam Violation'
+        verbose_name_plural = 'Exam Violations'
+    
+    def __str__(self):
+        return f'{self.attempt} - {self.get_violation_type_display()} ({self.violation_count}x)'

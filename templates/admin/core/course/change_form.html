@@ -1,0 +1,27 @@
+{% extends "admin/change_form.html" %}
+{% load i18n %}
+
+{% block object-tools %}
+    {{ block.super }}
+{% endblock %}
+
+{% block content %}
+    {% if bulk_upload_url %}
+    <div style="margin-bottom:12px;">
+    </div>
+    {% endif %}
+    {% if bulk_day_90_url %}
+    <div style="margin-bottom:12px;">
+        <a href="{{ bulk_day_90_url }}" class="button" style="background:#1f5f6a;color:#fff;padding:6px 10px;border-radius:4px;text-decoration:none;">Bulk 90-row day upload</a>
+    </div>
+    {% endif %}
+    {% if bulk_multi_day_url %}
+    <div style="margin-bottom:8px;">
+        <a href="{{ bulk_multi_day_url }}" class="button" style="background:#2a7a2f;color:#fff;padding:6px 10px;border-radius:4px;text-decoration:none;">Bulk multi-video day upload</a>
+    </div>
+    {% endif %}
+    {% if not bulk_multi_day_url and not bulk_day_90_url %}
+    <div style="margin-bottom:12px;color:#666">Bulk upload actions are available when editing a saved Course.</div>
+    {% endif %}
+    {{ block.super }}
+{% endblock %}

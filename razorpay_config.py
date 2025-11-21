@@ -3,8 +3,8 @@
 # Test Mode Configuration
 TEST_CONFIG = {
     'ENABLED': True,
-    'KEY_ID': 'rzp_test_RYnB6bkmpifFj4',
-    'KEY_SECRET': '4oKd2Eg9xRHnzsSK7IzD2xKD',
+    'KEY_ID': 'rzp_test_RhsfFmys1OtRoF',
+    'KEY_SECRET': 'P4rQRlaQxLzP8qvquEm8bqWT',
     'CURRENCY': 'INR'
 }
 

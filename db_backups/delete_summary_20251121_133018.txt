@@ -1,0 +1,13 @@
+Delete operation timestamp: 20251121_133018
+Backup file: B:\intership-works\vts_college-main\db_backups\db_backup_20251121_133018.sqlite3
+Users CSV: B:\intership-works\vts_college-main\db_backups\deleted_users_20251121_133018.csv
+
+VideoPlay rows deleted: 4
+ExamAnswer rows deleted: 5
+ExamViolation rows deleted: 0
+ExamAttempt rows deleted: 3
+Certificate rows deleted: 2
+CourseProgress rows deleted: 4
+CoursePayment rows deleted: 3
+CourseAccess rows deleted: 4
+User accounts deleted: 7

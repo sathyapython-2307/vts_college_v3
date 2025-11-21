@@ -1,0 +1,8 @@
+id,username,email,is_staff
+2,u1@gmail.com,u1@gmail.com,False
+5,testbuyer,testbuyer@example.com,False
+6,testuser,test@example.com,False
+7,curluser,curl@example.com,False
+8,tc,tc@example.com,False
+9,u2@gmail.com,u2@gmail.com,False
+10,u3@gmail.com,u3@gmail.com,False

@@ -1,0 +1,1156 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Exam - {{ exam.title }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    * {
+        -webkit-user-select: none;
+        user-select: none;
+    }
+    
+    body, html {
+        margin: 0;
+        padding: 0;
+        height: 100%;
+        overflow: hidden;
+        background: #f5f5f5;
+    }
+    
+    .exam-container {
+        display: flex;
+        height: 100vh;
+        flex-direction: column;
+    }
+    
+    .exam-header {
+        background: linear-gradient(135deg, #24b10b 0%, #81be76 100%);
+        color: white;
+        padding: 15px 20px;
+        display: flex;
+        justify-content: flex-start;
+        align-items: center;
+        border-bottom: 2px solid #1e9609;
+    }
+    
+    .exam-title {
+        font-size: 18px;
+        font-weight: bold;
+        margin: 0;
+    }
+    
+    .exam-timer {
+        font-size: 20px;
+        font-weight: bold;
+        padding: 10px 20px;
+        border-radius: 4px;
+        background: #1e9609;
+        color: white;
+        margin-top: 10px;
+    }
+    
+    .exam-timer.warning {
+        background: #f39c12;
+        animation: blink 1s infinite;
+    }
+    
+    @keyframes blink {
+        0%, 50% { opacity: 1; }
+        51%, 100% { opacity: 0.7; }
+    }
+    
+    .exam-content {
+        display: flex;
+        flex: 1;
+        overflow: hidden;
+    }
+    
+    .questions-nav {
+        width: 250px;
+        background: white;
+        border-right: 1px solid #ddd;
+        overflow-y: auto;
+        padding: 15px;
+    }
+    
+    .questions-nav h4 {
+        margin: 0 0 10px 0;
+        font-size: 14px;
+        text-transform: uppercase;
+        color: #7f8c8d;
+    }
+    
+    .question-buttons {
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        gap: 5px;
+    }
+    
+    .question-btn {
+        width: 100%;
+        aspect-ratio: 1;
+        border: 2px solid #bdc3c7;
+        background: white;
+        color: #2c3e50;
+        font-weight: bold;
+        cursor: pointer;
+        border-radius: 4px;
+        font-size: 12px;
+        transition: all 0.3s;
+    }
+    
+    .question-btn:hover {
+        border-color: #3498db;
+        background: #ecf0f1;
+    }
+    
+    .question-btn.answered {
+        background: #24b10b;
+        border-color: #1e9609;
+        color: white;
+    }
+    
+    .question-btn.current {
+        background: #81be76;
+        border-color: #24b10b;
+        color: white;
+    }
+    
+    .question-btn.visited {
+        background: #e8f8e5;
+        border-color: #24b10b;
+    }
+    
+    .question-display {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        background: white;
+        overflow-y: auto;
+    }
+    
+    .question-content {
+        padding: 30px;
+        flex: 1;
+    }
+
+    .question-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 15px;
+    }
+    
+    .question-num {
+        font-size: 14px;
+        color: #7f8c8d;
+        margin-bottom: 10px;
+    }
+    
+    .question-text {
+        font-size: 18px;
+        font-weight: bold;
+        margin-bottom: 25px;
+        color: #2c3e50;
+    }
+    
+    .options {
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+    }
+    
+    .option {
+        display: flex;
+        align-items: center;
+        padding: 15px;
+        border: 2px solid #ecf0f1;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: all 0.3s;
+        background: white;
+    }
+    
+    .option:hover {
+        border-color: #24b10b;
+        background: #f0fff0;
+    }
+    
+    .option.selected {
+        border-color: #24b10b;
+        background: #f0fff0;
+    }
+    
+    .option input[type="radio"] {
+        margin-right: 15px;
+        width: 20px;
+        height: 20px;
+        cursor: pointer;
+    }
+    
+    .option-label {
+        flex: 1;
+        font-size: 16px;
+        cursor: pointer;
+        color: #2c3e50;
+    }
+    
+    .exam-footer {
+        background: white;
+        border-top: 1px solid #ddd;
+        padding: 20px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .submit-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0,0,0,0.6);
+        z-index: 10000;
+        display: none;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .submit-overlay-box {
+        background: white;
+        padding: 24px 28px;
+        border-radius: 8px;
+        min-width: 280px;
+        text-align: center;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+        color: #2c3e50;
+        font-weight: 600;
+    }
+    
+    .nav-buttons {
+        display: flex;
+        gap: 10px;
+    }
+    
+    .btn {
+        padding: 10px 20px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 14px;
+        font-weight: bold;
+        transition: all 0.3s;
+    }
+    
+    .btn-primary {
+        background: #24b10b;
+        color: white;
+    }
+    
+    .btn-primary:hover {
+        background: #1e9609;
+    }
+    
+    .btn-success {
+        background: #81be76;
+        color: white;
+    }
+    
+    .btn-success:hover {
+        background: #24b10b;
+    }
+    
+    .btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+    
+    .progress-info {
+        font-size: 14px;
+        color: #7f8c8d;
+    }
+    
+    @media (max-width: 768px) {
+        .questions-nav {
+            width: 200px;
+        }
+        
+        .question-buttons {
+            grid-template-columns: repeat(4, 1fr);
+        }
+        
+        .question-content {
+            padding: 20px;
+        }
+        
+        .exam-title {
+            font-size: 16px;
+        }
+        
+        .exam-timer {
+            font-size: 16px;
+            padding: 8px 15px;
+        }
+    }
+    
+    @media (max-width: 600px) {
+        .exam-content {
+            flex-direction: column;
+        }
+        
+        .questions-nav {
+            width: 100%;
+            max-height: 120px;
+            border-right: none;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        .question-buttons {
+            grid-template-columns: repeat(5, 1fr);
+        }
+        
+        .exam-footer {
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        .nav-buttons {
+            width: 100%;
+            justify-content: space-between;
+        }
+    }
+
+    /* Start Exam Modal */
+    .start-exam-modal {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.9);
+        z-index: 10001;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .start-exam-box {
+        background: linear-gradient(135deg, #24b10b 0%, #81be76 100%);
+        padding: 60px 40px;
+        border-radius: 16px;
+        text-align: center;
+        max-width: 500px;
+        color: white;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+    }
+
+    .start-exam-box h2 {
+        margin-top: 0;
+        margin-bottom: 20px;
+        font-size: 32px;
+        color: white;
+    }
+
+    .start-exam-box p {
+        font-size: 16px;
+        margin: 15px 0;
+        line-height: 1.6;
+        opacity: 0.95;
+        color: white;
+    }
+
+    .start-exam-box ul {
+        text-align: left;
+        display: inline-block;
+        margin: 20px 0;
+        background: rgba(255, 255, 255, 0.1);
+        padding: 20px 30px;
+        border-radius: 8px;
+        backdrop-filter: blur(10px);
+    }
+
+    .start-exam-box li {
+        margin: 10px 0;
+        color: white;
+        font-size: 14px;
+    }
+
+    .start-exam-buttons {
+        display: flex;
+        gap: 15px;
+        justify-content: center;
+        margin-top: 30px;
+        flex-wrap: wrap;
+    }
+
+    .btn-start {
+        background: white;
+        color: #24b10b;
+        padding: 14px 40px;
+        border: none;
+        border-radius: 6px;
+        font-weight: bold;
+        font-size: 16px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .btn-start:hover {
+        background: #f0f0f0;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+    }
+
+    .btn-cancel {
+        background: rgba(255, 255, 255, 0.2);
+        color: white;
+        padding: 14px 40px;
+        border: 2px solid white;
+        border-radius: 6px;
+        font-weight: bold;
+        font-size: 16px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        backdrop-filter: blur(10px);
+    }
+
+    .btn-cancel:hover {
+        background: rgba(255, 255, 255, 0.3);
+        transform: translateY(-2px);
+    }
+</style>
+
+<!-- Start Exam Modal - shown before exam questions load -->
+<div id="startExamModal" class="start-exam-modal">
+    <div class="start-exam-box">
+        <h2>Ready to Start?</h2>
+        <p>Click <strong>Start Exam</strong> below to enter fullscreen mode and begin your test.</p>
+        <ul>
+            <li>✓ Fullscreen will hide all tabs, bookmarks, and browser UI</li>
+            <li>✓ Timer will start counting down</li>
+            <li>✓ Questions will load</li>
+            <li>✓ Anti-cheat monitoring is active</li>
+        </ul>
+        <div class="start-exam-buttons">
+            <button class="btn-start" id="startExamBtn" onclick="startExamWithFullscreen()">Start Exam</button>
+            <button class="btn-cancel" id="cancelExamBtn" onclick="window.location.href = '/course/{{ course.id }}/';">Cancel</button>
+        </div>
+    </div>
+</div>
+
+<div class="exam-container" style="display: none;" id="examMainContainer">
+    <div class="exam-header">
+        <h1 class="exam-title">{{ exam.title }}</h1>
+    </div>
+    
+    <div class="exam-content">
+        <div class="questions-nav">
+            <h4>Questions</h4>
+            <div class="question-buttons" id="questionNav"></div>
+        </div>
+        
+        <div class="question-display">
+            <div class="question-content" id="questionContent">
+                <div class="question-header">
+                    <div class="question-num" id="questionNum"></div>
+                    <div class="exam-timer" id="timer" style="min-width: 100px; text-align: center;">00:00</div>
+                </div>
+                <div class="question-text" id="questionText"></div>
+                <div class="options" id="optionsContainer"></div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="exam-footer">
+        <div class="progress-info">
+            Question <span id="currentQuestion">1</span> of {{ total_questions }}
+        </div>
+        <div class="nav-buttons">
+            <button class="btn btn-primary" id="prevBtn" onclick="previousQuestion()" disabled>← Previous</button>
+            <button class="btn btn-primary" id="nextBtn" onclick="nextQuestion()">Next →</button>
+            <button class="btn btn-success" id="submitBtn" onclick="submitExamSmooth()">Submit Exam</button>
+        </div>
+    </div>
+</div>
+</div>
+
+<!-- Anti-cheat modal -->
+<div id="antiCheatModal" style="display: none !important; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.8); z-index: 9999; align-items: center; justify-content: center;">
+    <div style="background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%); padding: 50px 40px; border-radius: 12px; text-align: center; max-width: 550px; color: white; box-shadow: 0 20px 60px rgba(0,0,0,0.5); animation: slideDown 0.4s ease-out;">
+        <h2 style="color: white; margin-top: 0;">Exam Rules Violation Detected</h2>
+        <p id="violationMessage" style="font-size: 16px; margin: 20px 0; line-height: 1.6;"></p>
+        <p style="font-size: 14px; opacity: 0.9; margin: 15px 0;">Your exam attempt has been terminated due to security policy violation. This attempt will be marked as invalid.</p>
+        <button id="returnBtn" onclick="window.location.href = '/course/{{ course.id }}/';" style="background: white; color: #24b10b; padding: 12px 30px; font-weight: bold; cursor: pointer; border: none; border-radius: 6px; font-size: 16px; pointer-events: auto;">Return to Course</button>
+    </div>
+</div>
+
+<div id="submitOverlay" class="submit-overlay">
+    <div class="submit-overlay-box" id="submitOverlayText">Submitting your exam…</div>
+</div>
+
+<script>
+let questions = [];
+let currentQuestionIndex = 0;
+let userAnswers = {};
+// timeRemaining is set from server-side remaining seconds to prevent tampering
+let timeRemaining = null; // will be set after server sync
+const attemptId = {{ attempt.id }};
+const courseId = {{ course.id }};
+const durationSeconds = ({{ duration_minutes }} || 150) * 60;
+let timerInterval;
+let isSubmitting = false;
+let isSubmitted = false;
+let violationDetected = false;
+let tabSwitchCount = 0;
+// Strict policy: any leave/switch/exit-fullscreen is an immediate violation
+const VIOLATION_THRESHOLD = 1;
+let lastFocusTime = Date.now();
+let examStarted = false;
+let questionsLoaded = false;
+let lastExamUpdatedAt = null;
+let lastQuestionsUpdatedAt = null;
+let lastQuestionsCount = null;
+
+// Helper function to record violation to the server
+async function recordViolation(violationType, description, shouldAutoSubmit = false) {
+    try {
+        await fetch(`/exam/${attemptId}/record-violation/`, {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken'),
+            },
+            body: JSON.stringify({
+                violation_type: violationType,
+                description: description,
+                auto_submit: shouldAutoSubmit,
+            })
+        });
+    } catch (error) {
+        console.error('Error recording violation:', error);
+    }
+}
+
+// Helper function to safely show violations only when actually detected
+function showViolation(message) {
+    if (!examStarted || !questionsLoaded || violationDetected) return; // Don't show multiple violations
+    console.warn('Violation detected:', message);
+    violationDetected = true;
+    document.getElementById('violationMessage').textContent = message;
+    const modal = document.getElementById('antiCheatModal');
+    modal.style.setProperty('display', 'flex', 'important');
+    // Make sure button inside modal is clickable
+    const returnBtn = document.getElementById('returnBtn');
+    if (returnBtn) {
+        returnBtn.style.pointerEvents = 'auto';
+    }
+    // Stop exam from continuing
+    examStarted = false; // Prevent further violations from being logged
+    clearInterval(timerInterval); // Stop the timer
+    
+    // Show submit overlay after a delay so user can see violation message
+    setTimeout(() => {
+        showSubmitOverlay('Finalizing your exam due to violation…');
+    }, 2000); // Wait 2 seconds for user to read the violation message
+
+    // Auto-submit after giving user time to read the violation
+    setTimeout(() => {
+        if (!isSubmitting && !isSubmitted) {
+            submitExamSmooth(true);
+        }
+    }, 5000);
+}
+
+// Anti-cheat: Disable right-click (only after exam starts)
+document.addEventListener('contextmenu', (e) => {
+    if (!questionsLoaded || !examStarted) return;
+    e.preventDefault();
+    const message = 'Right-click is disabled during the exam.';
+    recordViolation('right_click', message, true);
+    showViolation(message + ' This violation has been recorded. Your exam will now be submitted.');
+    return false;
+});
+
+// Anti-cheat: Disable copy/paste (only after exam starts)
+document.addEventListener('copy', (e) => {
+    if (!questionsLoaded || !examStarted) return;
+    e.preventDefault();
+    const message = 'Copy functionality is disabled during the exam.';
+    recordViolation('copy_paste', message + ' - copy attempt', true);
+    showViolation(message + ' This violation has been recorded. Your exam will now be submitted.');
+});
+
+document.addEventListener('paste', (e) => {
+    if (!questionsLoaded || !examStarted) return;
+    e.preventDefault();
+    const message = 'Paste functionality is disabled during the exam.';
+    recordViolation('copy_paste', message + ' - paste attempt', true);
+    showViolation(message + ' This violation has been recorded. Your exam will now be submitted.');
+});
+
+// Anti-cheat: Detect tab/window switch (only after exam starts)
+document.addEventListener('visibilitychange', () => {
+    if (!questionsLoaded || !examStarted) return;
+    if (document.hidden) {
+        tabSwitchCount++;
+        console.warn(`Tab switched away (${tabSwitchCount} time(s))`);
+        recordViolation('tab_switch', `Tab switched away - occurrence ${tabSwitchCount}`, true);
+        const message = `You have left or switched away from the exam window. This is not allowed.`;
+        showViolation(message + ' Your exam will now be submitted.');
+    }
+});
+
+// Anti-cheat: Detect keyboard focus loss (window minimized or alt-tab)
+window.addEventListener('blur', () => {
+    if (!questionsLoaded || !examStarted) return;
+    tabSwitchCount++;
+    console.warn(`Window lost focus (${tabSwitchCount} time(s))`);
+    recordViolation('window_blur', `Window lost focus - occurrence ${tabSwitchCount}`, true);
+    const message = `You have switched away from the exam window or minimized the browser. This is not allowed.`;
+    showViolation(message + ' Your exam will now be submitted.');
+});
+
+// Detect leaving fullscreen explicitly (immediate failure)
+function isInFullscreen() {
+    return !!(document.fullscreenElement || document.webkitFullscreenElement || document.msFullscreenElement);
+}
+
+document.addEventListener('fullscreenchange', () => {
+    if (!questionsLoaded || !examStarted) return;
+    if (!isInFullscreen()) {
+        console.warn('User exited fullscreen');
+        recordViolation('exit_fullscreen', 'User exited fullscreen', true);
+        showViolation('You exited fullscreen mode. This is not allowed. Your exam will now be submitted.');
+    }
+});
+document.addEventListener('webkitfullscreenchange', () => {
+    if (!questionsLoaded || !examStarted) return;
+    if (!isInFullscreen()) {
+        console.warn('User exited webkit fullscreen');
+        recordViolation('exit_fullscreen', 'User exited fullscreen', true);
+        showViolation('You exited fullscreen mode. This is not allowed. Your exam will now be submitted.');
+    }
+});
+
+// Anti-cheat: Fullscreen on load
+function requestFullscreen() {
+    const elem = document.documentElement;
+    if (elem.requestFullscreen) {
+        elem.requestFullscreen().catch(() => console.warn('Fullscreen request denied'));
+    } else if (elem.webkitRequestFullscreen) {
+        elem.webkitRequestFullscreen();
+    } else if (elem.msRequestFullscreen) {
+        elem.msRequestFullscreen();
+    }
+}
+
+// Function to safely access courseId for navigation
+function getCourseId() {
+    try {
+        return '{{ course.id }}';
+    } catch (e) {
+        return courseId;
+    }
+}
+
+// Anti-cheat: Prevent back button
+history.pushState(null, null, location.href);
+window.addEventListener('popstate', () => {
+    if (questionsLoaded && examStarted) {
+        history.pushState(null, null, location.href);
+        const message = 'Navigating away from the exam is not allowed.';
+        recordViolation('back_button', message, true);
+        showViolation(message + ' Your exam will now be submitted.');
+    }
+});
+
+// Anti-cheat: Disable F12, Ctrl+Shift+I, etc. (only after exam starts)
+document.addEventListener('keydown', (e) => {
+    if (!questionsLoaded || !examStarted) return;
+    
+    // List of blocked keys/combinations
+    const blockedCombos = [
+        e.key === 'F12',
+        e.key === 'F5',
+        e.key === 'Escape',
+        (e.ctrlKey && (e.key === 'r' || e.key === 'R')),
+        (e.metaKey && (e.key === 'r' || e.key === 'R')),
+        (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'i')),
+        (e.ctrlKey && e.shiftKey && (e.key === 'K' || e.key === 'k')),
+        (e.ctrlKey && e.shiftKey && (e.key === 'C' || e.key === 'c')),
+        (e.ctrlKey && (e.key === 'c' || e.key === 'C')),
+        (e.ctrlKey && (e.key === 'x' || e.key === 'X')),
+        (e.metaKey && (e.key === 'c' || e.key === 'C')),
+        (e.metaKey && (e.key === 'x' || e.key === 'X')),
+        (e.altKey && e.key === 'F4'),
+        (e.ctrlKey && e.key === 'q'),
+    ];
+    
+    if (blockedCombos.some(combo => combo)) {
+        e.preventDefault();
+        let message = 'Developer tools and certain keyboard shortcuts are disabled during the exam.';
+        let violationType = 'dev_tools';
+        
+        // Specific message for ESC key
+        if (e.key === 'Escape') {
+            message = 'Exiting fullscreen using ESC key is not allowed during the exam.';
+            violationType = 'exit_fullscreen';
+        }
+        
+        recordViolation(violationType, message, true);
+        showViolation(message + ' This violation has been recorded. Your exam will now be submitted.');
+        return false;
+    }
+});
+
+// Load questions
+async function loadQuestions() {
+    try {
+        const response = await fetch(`/exam/${attemptId}/get-questions/`, { credentials: 'same-origin' });
+        const data = await response.json();
+        questions = data.questions;
+        userAnswers = {};
+        questions.forEach(q => {
+            userAnswers[q.id] = q.selected_answer || '';
+        });
+        renderQuestions();
+        displayQuestion(0);
+        questionsLoaded = true;
+        examStarted = true;
+    } catch (error) {
+        console.error('Error loading questions:', error);
+    }
+}
+
+function renderQuestions() {
+    const nav = document.getElementById('questionNav');
+    nav.innerHTML = '';
+    questions.forEach((q, idx) => {
+        const btn = document.createElement('button');
+        btn.className = 'question-btn';
+        btn.textContent = idx + 1;
+        btn.onclick = () => displayQuestion(idx);
+        
+        if (userAnswers[q.id]) {
+            btn.classList.add('answered');
+        }
+        if (idx === currentQuestionIndex) {
+            btn.classList.add('current');
+        }
+        
+        nav.appendChild(btn);
+    });
+}
+
+function displayQuestion(index) {
+    if (index < 0 || index >= questions.length) return;
+    
+    currentQuestionIndex = index;
+    const q = questions[index];
+    
+    document.getElementById('currentQuestion').textContent = index + 1;
+    document.getElementById('questionNum').textContent = `Question ${index + 1} of ${questions.length}`;
+    document.getElementById('questionText').textContent = q.question_text;
+    
+    const optionsContainer = document.getElementById('optionsContainer');
+    optionsContainer.innerHTML = '';
+    
+    const options = [
+        { letter: 'A', text: q.option_a },
+        { letter: 'B', text: q.option_b },
+        { letter: 'C', text: q.option_c },
+        { letter: 'D', text: q.option_d },
+    ];
+    
+    options.forEach(opt => {
+        const div = document.createElement('div');
+        div.className = 'option';
+        if (userAnswers[q.id] === opt.letter) {
+            div.classList.add('selected');
+        }
+        
+        const input = document.createElement('input');
+        input.type = 'radio';
+        input.name = `question_${q.id}`;
+        input.value = opt.letter;
+        input.checked = userAnswers[q.id] === opt.letter;
+        input.onchange = () => selectAnswer(q.id, opt.letter);
+        
+        const label = document.createElement('span');
+        label.className = 'option-label';
+        label.textContent = `${opt.letter}. ${opt.text}`;
+        label.onclick = () => {
+            input.checked = true;
+            selectAnswer(q.id, opt.letter);
+        };
+        
+        div.appendChild(input);
+        div.appendChild(label);
+        optionsContainer.appendChild(div);
+    });
+    
+    // Update nav buttons
+    document.getElementById('prevBtn').disabled = index === 0;
+    document.getElementById('nextBtn').disabled = index === questions.length - 1;
+    
+    renderQuestions();
+}
+
+async function selectAnswer(questionId, answer) {
+    userAnswers[questionId] = answer;
+    
+    try {
+        await fetch(`/exam/${attemptId}/save-answer/`, {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken'),
+            },
+            body: JSON.stringify({ question_id: questionId, selected_answer: answer })
+        });
+    } catch (error) {
+        console.error('Error saving answer:', error);
+    }
+    
+    renderQuestions();
+    displayQuestion(currentQuestionIndex);
+}
+
+function previousQuestion() {
+    if (currentQuestionIndex > 0) {
+        displayQuestion(currentQuestionIndex - 1);
+    }
+}
+
+function nextQuestion() {
+    if (currentQuestionIndex < questions.length - 1) {
+        displayQuestion(currentQuestionIndex + 1);
+    }
+}
+
+// legacy submit wrapper kept for compatibility (calls smooth variant)
+async function submitExam(forced = false) {
+    return submitExamSmooth(forced);
+}
+
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+function startTimer() {
+    timerInterval = setInterval(() => {
+        // Only decrement local counter when initialized
+        if (timeRemaining === null) return;
+        timeRemaining--;
+        
+        const minutes = Math.floor(timeRemaining / 60);
+        const seconds = timeRemaining % 60;
+        const timerDisplay = `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+        document.getElementById('timer').textContent = timerDisplay;
+        
+        const timerEl = document.getElementById('timer');
+        if (timeRemaining <= 300) {
+            timerEl.classList.add('warning');
+        }
+        
+        if (timeRemaining <= 0) {
+            clearInterval(timerInterval);
+            submitExamSmooth(true);
+        }
+    }, 1000);
+}
+
+function showSubmitOverlay(text) {
+    const overlay = document.getElementById('submitOverlay');
+    const box = document.getElementById('submitOverlayText');
+    if (box) box.textContent = text || 'Submitting your exam…';
+    if (overlay) overlay.style.display = 'flex';
+}
+
+function hideSubmitOverlay() {
+    const overlay = document.getElementById('submitOverlay');
+    if (overlay) overlay.style.display = 'none';
+}
+
+async function submitExamSmooth(forced = false) {
+    if (isSubmitting || isSubmitted) return;
+    if (!forced) {
+        // Count unanswered questions
+        let unanswered = 0;
+        for (let i = 0; i < questions.length; i++) {
+            const q = questions[i];
+            if (!userAnswers[q.id] || String(userAnswers[q.id]).trim() === '') unanswered++;
+        }
+
+        let message = '';
+        if (unanswered > 0) {
+            message = `You have ${unanswered} unanswered question${unanswered > 1 ? 's' : ''}. Are you sure you want to submit?`;
+        } else {
+            message = 'Are you sure you want to submit your final answers?';
+        }
+
+        const proceed = confirm(message);
+        if (!proceed) return;
+    }
+
+    questionsLoaded = false;
+    window.onbeforeunload = null;
+    isSubmitting = true;
+    clearInterval(timerInterval);
+    
+    // ONLY hide antiCheatModal if this is NOT a forced submission (violation case)
+    // For violations, keep the modal visible so user sees the violation message
+    if (!forced) {
+    const antiCheat = document.getElementById('antiCheatModal');
+    if (antiCheat && !forced) antiCheat.style.display = 'none';
+    }
+    
+    const submitBtn = document.getElementById('submitBtn');
+    const prevBtn = document.getElementById('prevBtn');
+    const nextBtn = document.getElementById('nextBtn');
+    if (submitBtn) submitBtn.disabled = true;
+    if (prevBtn) prevBtn.disabled = true;
+    if (nextBtn) nextBtn.disabled = true;
+    
+    // Show submit overlay only if not a violation (keep violation modal visible)
+    if (!forced) {
+        showSubmitOverlay('Submitting your exam…');
+    }
+
+    try {
+        const response = await fetch(`/exam/${attemptId}/submit/`, {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken'),
+            },
+            body: JSON.stringify({})
+        });
+
+        let data = {};
+        try { data = await response.json(); } catch (_) { data = {}; }
+
+        if (data && (data.success || String(data.error || '').toLowerCase().includes('already'))) {
+            isSubmitted = true;
+            hideSubmitOverlay();
+            if (forced) {
+                window.location.href = `/course/${courseId}/`;
+            } else {
+                window.location.href = `/exam/${attemptId}/results/`;
+            }
+            return;
+        }
+
+        const resync = await fetch(`/exam/${attemptId}/time-left/`, { credentials: 'same-origin' }).then(r => r.json()).catch(() => null);
+        if (resync && resync.is_submitted) {
+            isSubmitted = true;
+            hideSubmitOverlay();
+            if (forced) {
+                window.location.href = `/course/${courseId}/`;
+            } else {
+                window.location.href = `/exam/${attemptId}/results/`;
+            }
+            return;
+        }
+
+        hideSubmitOverlay();
+        isSubmitting = false;
+        if (submitBtn) submitBtn.disabled = false;
+        if (prevBtn) prevBtn.disabled = currentQuestionIndex === 0;
+        if (nextBtn) nextBtn.disabled = currentQuestionIndex === questions.length - 1;
+    } catch (error) {
+        const resync = await fetch(`/exam/${attemptId}/time-left/`, { credentials: 'same-origin' }).then(r => r.json()).catch(() => null);
+        if (resync && resync.is_submitted) {
+            isSubmitted = true;
+            hideSubmitOverlay();
+            if (forced) {
+                window.location.href = `/course/${courseId}/`;
+            } else {
+                window.location.href = `/exam/${attemptId}/results/`;
+            }
+            return;
+        }
+        hideSubmitOverlay();
+        isSubmitting = false;
+        if (submitBtn) submitBtn.disabled = false;
+        if (prevBtn) prevBtn.disabled = currentQuestionIndex === 0;
+        if (nextBtn) nextBtn.disabled = currentQuestionIndex === questions.length - 1;
+    }
+}
+
+// Function to start exam with fullscreen (triggered by user click)
+function startExamWithFullscreen() {
+    // Hide the modal and show the main exam container
+    const modal = document.getElementById('startExamModal');
+    const mainContainer = document.getElementById('examMainContainer');
+    
+    if (modal) modal.style.display = 'none';
+    if (mainContainer) mainContainer.style.display = 'flex';
+    
+    // Request fullscreen now that user has clicked (user gesture is active)
+    const elem = document.documentElement;
+    
+    const fullscreenPromise = elem.requestFullscreen ? elem.requestFullscreen()
+        : elem.webkitRequestFullscreen ? elem.webkitRequestFullscreen()
+        : elem.msRequestFullscreen ? elem.msRequestFullscreen()
+        : Promise.resolve();
+    
+    // Proceed to start exam after a brief delay to allow fullscreen to activate
+    Promise.resolve(fullscreenPromise).then(() => {
+        proceedToStartExam();
+    }).catch(() => {
+        // If fullscreen fails, still proceed (user can use without fullscreen)
+        console.warn('Fullscreen request failed, proceeding without fullscreen');
+        proceedToStartExam();
+    });
+}
+
+// Initialize
+window.addEventListener('load', () => {
+    console.log('Exam portal loaded. timeRemaining:', timeRemaining);
+    
+    // Show the Start Exam modal on load (not the main exam container yet)
+    const modal = document.getElementById('startExamModal');
+    const mainContainer = document.getElementById('examMainContainer');
+    if (modal) modal.style.display = 'flex';
+    if (mainContainer) mainContainer.style.display = 'none';
+    
+    // Set initial timer display IMMEDIATELY (use configured duration until server sync)
+    const timerEl = document.getElementById('timer');
+    if (timerEl) {
+        const initial = (timeRemaining === null) ? durationSeconds : timeRemaining;
+        const minutes = Math.floor(initial / 60);
+        const seconds = initial % 60;
+        const displayTime = `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+        timerEl.textContent = displayTime;
+        console.log('Timer display set to:', displayTime);
+    }
+    
+    // Handle Return to Course button - CRITICAL: must work even when modal is shown
+    const returnBtn = document.getElementById('returnBtn');
+    if (returnBtn) {
+        returnBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            const courseId = '{{ course.id }}';
+            console.log('Return to Course clicked. Navigating to:', `/course/${courseId}/`);
+            window.location.href = `/course/${courseId}/`;
+        });
+        console.log('Return to Course button listener attached');
+    } else {
+        console.warn('Return to Course button not found!');
+    }
+    
+    // proceedToStartExam will be called after user clicks "Start Exam" button
+});
+
+// Helper function to proceed with exam start (called after fullscreen or user confirms)
+function proceedToStartExam() {
+    // Sync timer with server to prevent manipulation
+    fetch(`/exam/${attemptId}/time-left/`, { credentials: 'same-origin' })
+        .then(r => r.json())
+        .then(data => {
+            if (data && typeof data.remaining_seconds !== 'undefined') {
+                timeRemaining = Number(data.remaining_seconds);
+                if (isNaN(timeRemaining) || timeRemaining === null) {
+                    timeRemaining = durationSeconds; // fallback
+                }
+                const timerEl = document.getElementById('timer');
+                const minutes = Math.floor(timeRemaining / 60);
+                const seconds = timeRemaining % 60;
+                timerEl.textContent = `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+            } else {
+                timeRemaining = durationSeconds;
+            }
+            startTimer();
+        }).catch(err => {
+            console.warn('Time sync error:', err);
+            timeRemaining = durationSeconds;
+            startTimer();
+        });
+
+    loadQuestions();
+}
+
+// Periodically re-sync with server (every 10 seconds) to prevent tampering
+setInterval(() => {
+        if (!attemptId || isSubmitted) return;
+        fetch(`/exam/${attemptId}/time-left/`, { credentials: 'same-origin' })
+            .then(r => r.json())
+            .then(data => {
+                if (!data) return;
+                if (data.is_submitted) {
+                    // server indicates the attempt is already submitted - stop and redirect
+                    clearInterval(timerInterval);
+                    // Redirect to course as forced termination
+                    isSubmitted = true;
+                    window.location.href = `/course/${courseId}/`;
+                }
+
+                // Reflect admin updates without page refresh
+                const examUpdatedAt = data.exam_updated_at || null;
+                const questionsUpdatedAt = data.questions_updated_at || null;
+                const questionsCount = typeof data.questions_count !== 'undefined' ? Number(data.questions_count) : null;
+
+                // initialize baselines on first poll
+                if (lastExamUpdatedAt === null) lastExamUpdatedAt = examUpdatedAt;
+                if (lastQuestionsUpdatedAt === null) lastQuestionsUpdatedAt = questionsUpdatedAt;
+                if (lastQuestionsCount === null && questionsCount !== null) lastQuestionsCount = questionsCount;
+
+                const metaChanged = (
+                    (lastExamUpdatedAt && examUpdatedAt && examUpdatedAt !== lastExamUpdatedAt) ||
+                    (lastQuestionsUpdatedAt && questionsUpdatedAt && questionsUpdatedAt !== lastQuestionsUpdatedAt) ||
+                    (lastQuestionsCount !== null && questionsCount !== null && questionsCount !== lastQuestionsCount)
+                );
+
+                if (data.exam_active === false && !isSubmitting && !isSubmitted) {
+                    showViolation('Exam configuration changed by admin. The exam is now inactive. Your attempt will be finalized.');
+                }
+
+                if (metaChanged) {
+                    lastExamUpdatedAt = examUpdatedAt;
+                    lastQuestionsUpdatedAt = questionsUpdatedAt;
+                    lastQuestionsCount = questionsCount;
+                    loadQuestions();
+                }
+
+                const serverRemaining = Number(data.remaining_seconds || 0);
+                if (!isNaN(serverRemaining) && serverRemaining >= 0) {
+                    // If server reports less time than local, update local to be server value
+                    if (timeRemaining === null || serverRemaining < timeRemaining - 2) {
+                        timeRemaining = serverRemaining;
+                    }
+                    // If server says time is up, force-submit
+                    if (serverRemaining <= 0) {
+                        clearInterval(timerInterval);
+                        submitExamSmooth(true);
+                    }
+                }
+            }).catch(() => {});
+}, 10000);
+
+// Prevent page reload (only after exam questions are loaded)
+window.addEventListener('beforeunload', (e) => {
+    if (!questionsLoaded) return;
+    e.preventDefault();
+    e.returnValue = '';
+});
+</script>
+{% endblock %}

@@ -1,0 +1,41 @@
+{% extends "admin/base_site.html" %}
+{% load static %}
+
+{% block content %}
+  <h1>{{ title }} — {{ course.name }}</h1>
+  <p>Each row corresponds to one Day with one video. Fill the Day title or leave blank to auto-number. Leave unused rows empty.</p>
+  <form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    {{ formset.management_form }}
+    <table class="table" style="width:100%;border-collapse:collapse;">
+      <thead>
+        <tr>
+          <th style="width:15%">Day title</th>
+          <th style="width:25%">Video title</th>
+          <th style="width:15%">Thumbnail</th>
+          <th style="width:20%">Video file</th>
+          <th style="width:8%">Order</th>
+          <th style="width:6%">Active</th>
+          <th style="width:6%">Delete</th>
+        </tr>
+      </thead>
+      <tbody>
+      {% for form in formset.forms %}
+        <tr>
+          <td>{{ form.day_title }}</td>
+          <td>{{ form.item_title }}</td>
+          <td>{{ form.thumbnail }}</td>
+          <td>{{ form.video_file }}</td>
+          <td>{{ form.order }}</td>
+          <td>{{ form.is_active }}</td>
+          <td>{{ form.DELETE }}</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    <p>
+      <input type="submit" value="Create Days and Videos" class="default" />
+      <a href="{% url 'admin:core_course_change' course.pk %}">Cancel</a>
+    </p>
+  </form>
+{% endblock %}

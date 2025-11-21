@@ -1,0 +1,16 @@
+{% extends "admin/base_site.html" %}
+{% load static %}
+
+{% block content %}
+  <div class="module">
+    <h1>{{ title }}</h1>
+    <form method="post" enctype="multipart/form-data">
+      {% csrf_token %}
+      <table>
+        {{ form.as_table }}
+      </table>
+      <input type="submit" value="Upload" class="default" />
+      <a href="{% url 'admin:core_coursescheduleday_changelist' %}">Cancel</a>
+    </form>
+  </div>
+{% endblock %}

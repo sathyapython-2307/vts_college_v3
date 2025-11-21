@@ -1,0 +1,13 @@
+{% extends "admin/change_list.html" %}
+{% load i18n %}
+
+{% block object-tools %}
+    {{ block.super }}
+    {% if bulk_multi_global_url %}
+    <ul class="object-tools">
+        <li>
+            <a href="{{ bulk_multi_global_url }}" class="addlink" style="background:#2a7a2f;color:#fff;padding:6px 10px;border-radius:4px;text-decoration:none;">Bulk multi-day upload (global)</a>
+        </li>
+    </ul>
+    {% endif %}
+{% endblock %}

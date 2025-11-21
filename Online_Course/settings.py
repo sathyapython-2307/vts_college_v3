@@ -1,8 +1,19 @@
 import os
+import sys
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+# Load environment variables from a local .env file during development
+# This allows settings like DEBUG=true from .env to take effect when running locally.
+try:
+    from dotenv import load_dotenv
+    # Prefer a project root .env if present
+    load_dotenv(os.path.join(BASE_DIR, '.env'))
+except Exception:
+    # If python-dotenv is not available, continue without loading .env
+    pass
 
 # SECURITY WARNING: keep the secret key used in production secret!
 # Prefer an explicit SECRET_KEY from the environment in production.
@@ -64,14 +75,29 @@ else:
             raise ValueError('SECRET_KEY environment variable is required in production')
 
 # SECURITY WARNING: don't run with debug turned on in production!
+# Default to False unless explicitly set via environment/.env
 DEBUG = os.environ.get('DEBUG', 'False').lower() == 'true'
+
+# Ensure local development using manage.py runserver does not enforce HTTPS.
+# This avoids browser auto-upgrade/HSTS loops during local testing.
+if 'runserver' in sys.argv or 'runserver_plus' in sys.argv:
+    DEBUG = True
 
 # Parse ALLOWED_HOSTS from environment variable or use defaults
 ALLOWED_HOSTS_STR = os.environ.get('ALLOWED_HOSTS', '')
 if ALLOWED_HOSTS_STR:
     ALLOWED_HOSTS = [h.strip() for h in ALLOWED_HOSTS_STR.split(',') if h.strip()]
 else:
-    ALLOWED_HOSTS = ['localhost', '127.0.0.1', 'testserver']
+    # In development, allow a few handy loopback hostnames that map to 127.0.0.1
+    # This helps if your browser has cached HSTS for localhost/127.0.0.1.
+    ALLOWED_HOSTS = [
+        'localhost',
+        '127.0.0.1',
+        'testserver',
+        'lvh.me',              # lvh.me resolves to 127.0.0.1
+        'localtest.me',        # localtest.me resolves to 127.0.0.1
+        '127.0.0.1.nip.io',    # nip.io wildcard resolves to the embedded IP
+    ]
 
 # Add Render domain if present
 RENDER_HOSTNAME = os.environ.get('RENDER_EXTERNAL_HOSTNAME')
@@ -90,8 +116,17 @@ INSTALLED_APPS = [
     'core',  # Your app
 ]
 
-MIDDLEWARE = [
-    'django.middleware.security.SecurityMiddleware',
+# Development helper apps (added only if installed)
+try:
+    import django_extensions  # noqa: F401
+    INSTALLED_APPS.append('django_extensions')
+except Exception:
+    # If not installed, skip silently (keeps production clean)
+    pass
+
+# Build middleware list. In development (DEBUG=True) we avoid inserting
+# SecurityMiddleware so that local runserver never enforces HTTPS or HSTS.
+_middleware = [
     'whitenoise.middleware.WhiteNoiseMiddleware',  # Add WhiteNoise middleware
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -100,6 +135,19 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
+
+if not DEBUG:
+    # Only enable the SecurityMiddleware in production where SECURE_* settings apply
+    MIDDLEWARE = ['django.middleware.security.SecurityMiddleware'] + _middleware
+else:
+    # During local development we may encounter CSRF token mismatches caused by
+    # alternate hostnames, tools, or rapid login/logout cycles. To make local
+    # development friction-free, remove the CSRF middleware when DEBUG=True.
+    # NOTE: This is ONLY for local development. Do NOT enable this in
+    # production environments. If you need stricter diagnostics, re-enable the
+    # middleware and follow the debug steps in the project README.
+    dev_middleware = [m for m in _middleware if m != 'django.middleware.csrf.CsrfViewMiddleware']
+    MIDDLEWARE = dev_middleware
 
 ROOT_URLCONF = 'Online_Course.urls'
 
@@ -158,14 +206,28 @@ SECURE_HSTS_PRELOAD = not DEBUG
 SESSION_COOKIE_SECURE = not DEBUG
 CSRF_COOKIE_SECURE = not DEBUG
 
-# If the app is behind a proxy (like Render's router), trust the X-Forwarded-Proto header
-# so Django can infer the original scheme and correctly build redirect URLs.
-SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
-
-# Add Render hostname to CSRF trusted origins so CSRF checks succeed for HTTPS requests
-CSRF_TRUSTED_ORIGINS = []
-if RENDER_HOSTNAME:
-    CSRF_TRUSTED_ORIGINS.append(f'https://{RENDER_HOSTNAME}')
+# If the app is behind a proxy (like Render's router), trust the X-Forwarded-Proto
+# header so Django can infer the original scheme and correctly build redirect URLs.
+# Only enable this in production (when DEBUG=False).
+if not DEBUG:
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+    # Add Render hostname to CSRF trusted origins so CSRF checks succeed for HTTPS requests
+    CSRF_TRUSTED_ORIGINS = []
+    if RENDER_HOSTNAME:
+        CSRF_TRUSTED_ORIGINS.append(f'https://{RENDER_HOSTNAME}')
+else:
+    SECURE_PROXY_SSL_HEADER = None
+    # In development, be permissive for common loopback origins so tools
+    # and alternate hostnames (localhost, 127.0.0.1) don't trigger CSRF
+    # failures when accessing the dev server on different hostnames/ports.
+    CSRF_TRUSTED_ORIGINS = [
+        'http://localhost',
+        'http://localhost:8000',
+        'http://127.0.0.1',
+        'http://127.0.0.1:8000',
+        'http://0.0.0.0',
+        'http://0.0.0.0:8000',
+    ]
 
 # Additional security settings
 SECURE_BROWSER_XSS_FILTER = not DEBUG

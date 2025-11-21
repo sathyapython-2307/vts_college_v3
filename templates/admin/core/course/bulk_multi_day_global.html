@@ -1,0 +1,78 @@
+{% extends "admin/base_site.html" %}
+{% load static %}
+
+{% block content %}
+  <h1>{{ title }}</h1>
+  <form method="get">
+    <label for="id_course">Select course:</label>
+    {{ select_form.course }}
+    <input type="submit" value="Go" />
+  </form>
+
+  {% if course %}
+    <h2>Existing Days for {{ course.name }}</h2>
+    {% if existing_days %}
+      <ul>
+      {% for day in existing_days %}
+        <li><strong>{{ day.title }}</strong>
+          <ul>
+            {% for it in day.items.all %}
+              <li>
+                {% if it.thumbnail %}
+                  <img src="{{ it.thumbnail.url }}" style="height:40px;vertical-align:middle;margin-right:6px;" />
+                {% endif %}
+                {% if it.video_file %}
+                  <a href="{{ it.video_file.url }}" target="_blank">{{ it.title }}</a>
+                {% elif it.video_url %}
+                  <a href="{{ it.video_url }}" target="_blank">{{ it.title }}</a>
+                {% else %}
+                  {{ it.title }}
+                {% endif %}
+              </li>
+            {% endfor %}
+          </ul>
+        </li>
+      {% endfor %}
+      </ul>
+    {% else %}
+      <p>No days exist yet for this course.</p>
+    {% endif %}
+
+    <h2>Add upcoming Days (each row can include multiple videos)</h2>
+    <form method="post" enctype="multipart/form-data">
+      {% csrf_token %}
+      {{ formset.management_form }}
+      <table class="table" style="width:100%;border-collapse:collapse;">
+        <thead>
+          <tr>
+            <th style="width:20%">Day title</th>
+            <th style="width:20%">Video title</th>
+            <th style="width:15%">Thumbnail</th>
+            <th style="width:25%">Video files (select multiple)</th>
+            <th style="width:8%">Order</th>
+            <th style="width:6%">Active</th>
+            <th style="width:6%">Delete</th>
+          </tr>
+        </thead>
+        <tbody>
+        {% for form in formset.forms %}
+          <tr>
+            <td>{{ form.day_title }}</td>
+            <td>{{ form.base_item_title }}</td>
+            <td>{{ form.thumbnail }}</td>
+            <td>{{ form.files }}</td>
+            <td>{{ form.order }}</td>
+            <td>{{ form.is_active }}</td>
+            <td>{{ form.DELETE }}</td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+      <input type="hidden" name="course" value="{{ course.pk }}" />
+      <p>
+        <input type="submit" value="Create Days and Videos" class="default" />
+        <a href="{% url 'admin:core_course_changelist' %}">Back to courses</a>
+      </p>
+    </form>
+  {% endif %}
+{% endblock %}

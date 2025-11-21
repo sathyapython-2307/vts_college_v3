@@ -12,7 +12,7 @@ services:
     buildCommand: "./build.sh"
   # Use a dedicated startup script to run migrations/collectstatic and then
   # exec gunicorn. This is easier to maintain and forwards signals correctly.
-  startCommand: "./start.sh"
+    startCommand: "./start.sh"
     envVars:
       - key: DATABASE_URL
         fromDatabase:
