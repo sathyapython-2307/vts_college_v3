@@ -1,48 +1,20 @@
+# Single Render service configuration. Adjust `plan` and env vars in the
+# Render dashboard as needed.
 services:
   - type: web
-    name: vts-college-web
+    name: vts-college
     env: python
-    plan: starter
+    plan: free
     buildCommand: pip install -r requirements-pinned.txt && python manage.py migrate --noinput && python manage.py collectstatic --noinput
-    startCommand: gunicorn Online_Course.wsgi:application --bind 0.0.0.0:$PORT
+    startCommand: ./start.sh
     healthCheckPath: /healthz/
     envVars:
+      - key: DATABASE_URL
+        sync: false
       - key: SECRET_KEY
         sync: false
       - key: DEBUG
         value: "False"
-      - key: ALLOWED_HOSTS
-      - key: DATABASE_URL
-
-# Note: This file is a template for Render. Add any additional services (e.g. managed postgres)
-# or environment variables in the Render dashboard. The buildCommand runs migrations and
-# collectstatic so deploys create missing tables and publish static assets.
-databases:
-  - name: vts_college_db
-    databaseName: vts_college
-    user: vts_college
-    plan: free
-
-services:
-  - type: web
-    name: vts_college
-    env: python
-    plan: free
-    buildCommand: "./build.sh"
-  # Use a dedicated startup script to run migrations/collectstatic and then
-  # exec gunicorn. This is easier to maintain and forwards signals correctly.
-    startCommand: "./start.sh"
-    envVars:
-      - key: DATABASE_URL
-        fromDatabase:
-          name: vts_college_db
-          property: connectionString
-      - key: SECRET_KEY
-        generateValue: true
-      - key: PYTHON_VERSION
-        value: 3.11.4
-      - key: DEBUG
-        value: false
       - key: ALLOWED_HOSTS
         value: localhost,127.0.0.1
       - key: RAZORPAY_ENABLED
@@ -52,3 +24,11 @@ services:
       - key: RAZORPAY_KEY_SECRET
         sync: false
     autoDeploy: true
+
+# Optional managed database block; Render can provision a Postgres DB and
+# expose the `connectionString` which you then paste into `DATABASE_URL`.
+databases:
+  - name: vts_college_db
+    databaseName: vts_college
+    user: vts_college
+    plan: free
