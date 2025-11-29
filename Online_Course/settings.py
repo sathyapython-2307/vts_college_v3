@@ -263,7 +263,8 @@ STATICFILES_DIRS = [
 ]
 
 # WhiteNoise configuration
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+# Using standard storage instead of CompressedManifest for better compatibility
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedStaticFilesStorage'
 
 # Media files
 MEDIA_URL = '/media/'

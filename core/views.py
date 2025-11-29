@@ -69,7 +69,7 @@ def static_check(request):
     if not root:
         return JsonResponse({'error': 'STATIC_ROOT not configured'}, status=500)
 
-    result = {'static_root': str(root), 'files': [], 'manifest': None}
+    result = {'static_root': str(root), 'files': [], 'manifest': None, 'manifests_found': []}
     try:
         # List files (top-level, not recursive heavy walk)
         for dirpath, dirnames, filenames in os.walk(root):
@@ -77,15 +77,20 @@ def static_check(request):
                 rel = os.path.relpath(os.path.join(dirpath, fn), root)
                 result['files'].append(rel.replace('\\', '/'))
 
-        # Try to read manifest.json if present
-        manifest_path = os.path.join(root, 'manifest.json')
-        if os.path.exists(manifest_path):
-            try:
-                import json as _json
-                with open(manifest_path, 'r', encoding='utf-8') as f:
-                    result['manifest'] = _json.load(f)
-            except Exception as me:
-                result['manifest_error'] = str(me)
+        # Check common manifest filenames created by Manifest storage variants
+        import json as _json
+        for candidate in ('manifest.json', 'staticfiles.json', 'staticfiles_manifest.json', 'manifest-static.json'):
+            manifest_path = os.path.join(root, candidate)
+            if os.path.exists(manifest_path):
+                try:
+                    with open(manifest_path, 'r', encoding='utf-8') as f:
+                        parsed = _json.load(f)
+                    result['manifests_found'].append(candidate)
+                    # only set 'manifest' to the first found to keep output small
+                    if result['manifest'] is None:
+                        result['manifest'] = parsed
+                except Exception as me:
+                    result.setdefault('manifest_errors', {})[candidate] = str(me)
     except Exception as e:
         result['error'] = str(e)
 
