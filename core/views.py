@@ -33,6 +33,25 @@ from .models_brochure import BrochureDownload
 logger = logging.getLogger(__name__)
 
 
+def health(request):
+    """Simple health endpoint used by Render and post-deploy checks.
+
+    Returns 200 with a small JSON payload. Attempts a lightweight DB query
+    (`Course.objects.exists()`) to surface obvious DB/schema issues.
+    """
+    status = {'status': 'ok'}
+    try:
+        # A harmless DB query to ensure the default DB and migrations are OK.
+        _ = Course.objects.exists()
+        status['db'] = 'ok'
+    except Exception as e:
+        # Capture error so operators can inspect logs if the health check fails.
+        status['db'] = 'error'
+        status['db_error'] = str(e)
+
+    return JsonResponse(status)
+
+
 @login_required
 def settings(request):
     return render(request, 'settings.html')

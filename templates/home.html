@@ -146,7 +146,7 @@
                 <div class="feature-card">
                     <span class="card-number">02</span>
                     <div class="icon-circle">
-                        <img src="static/images/h2.png" alt="Top Instructors Icon">
+                        <img src="{% static 'images/h2.png' %}" alt="Top Instructors Icon">
                     </div>
                     <h3 class="card-title">Top Instructors</h3>
                     <p class="card-description">Learn from the best! Our digital education courses are led by top instructors to ensure your success.</p>
@@ -155,7 +155,7 @@
                 <div class="feature-card">
                     <span class="card-number">03</span>
                     <div class="icon-circle">
-                        <img src="static/images/h2.png" alt="Online Certificates Icon">
+                        <img src="{% static 'images/h2.png' %}" alt="Online Certificates Icon">
                     </div>
                     <h3 class="card-title">Online Certificates</h3>
                     <p class="card-description">Earn industry-recognized digital education certificates that showcase your skills and boost your career prospects.</p>
@@ -164,7 +164,7 @@
                 <div class="feature-card">
                     <span class="card-number">04</span>
                     <div class="icon-circle">
-                        <img src="static/images/h2.png" alt="Members Icon">
+                        <img src="{% static 'images/h2.png' %}" alt="Members Icon">
                     </div>
                     <h3 class="card-title">50+ Members</h3>
                     <p class="card-description">oin our thriving community of 50+ members and elevate your skills with our digital education platform</p>
@@ -186,7 +186,7 @@
         </div>
         {% else %}
         <div class="image-container">
-            <img src="static/images/h3.png" alt="Professional Instructor">
+            <img src="{% static 'images/h3.png' %}" alt="Professional Instructor">
         </div>
 
         <div class="content-container">
@@ -222,70 +222,70 @@
                         {% if course.image %}
                             <img src="{{ course.image.url }}" alt="{{ course.name }}" class="course-image">
                         {% else %}
-                            <img src="static/images/h4.png" alt="{{ course.name }}" class="course-image">
+                            <img src="{% static 'images/h4.png' %}" alt="{{ course.name }}" class="course-image">
                         {% endif %}
                         <div class="course-name">{{ course.name }}</div>
                     </a>
                 {% endfor %}
             {% else %}
                     <a href="{% url 'course_detail' slug='python-fullstack' %}" class="course-card" data-category="development" data-category-name="development">
-                        <img src="static/images/h4.png" alt="Python Fullstack" class="course-image">
+                        <img src="{% static 'images/h4.png' %}" alt="Python Fullstack" class="course-image">
                         <div class="course-name">Python Fullstack</div>
                     </a>
 
                     <a href="{% url 'course_detail' slug='java-fullstack' %}" class="course-card" data-category="development" data-category-name="development">
-                        <img src="static/images/h5.png" alt="Java Fullstack" class="course-image">
+                        <img src="{% static 'images/h5.png' %}" alt="Java Fullstack" class="course-image">
                         <div class="course-name">Java Fullstack</div>
                     </a>
 
                     <a href="{% url 'course_detail' slug='ui-ux-designing' %}" class="course-card" data-category="design" data-category-name="design">
-                        <img src="static/images/h6.png" alt="UI UX Designing" class="course-image">
+                        <img src="{% static 'images/h6.png' %}" alt="UI UX Designing" class="course-image">
                         <div class="course-name">UI UX Designing</div>
                     </a>
 
                     <a href="{% url 'course_detail' slug='data-analytics' %}" class="course-card" data-category="business" data-category-name="business">
-                        <img src="static/images/h7.png" alt="Data Analytics" class="course-image">
+                        <img src="{% static 'images/h7.png' %}" alt="Data Analytics" class="course-image">
                         <div class="course-name">Data Analytics</div>
                     </a>
 
                     <a href="{% url 'course_detail' slug='data-science' %}" class="course-card" data-category="business" data-category-name="business">
-                        <img src="static/images/h8.png" alt="Data Science" class="course-image">
+                        <img src="{% static 'images/h8.png' %}" alt="Data Science" class="course-image">
                         <div class="course-name">Data Science</div>
                     </a>
 
                     <a href="{% url 'course_detail' slug='mern-stack-developer' %}" class="course-card" data-category="development" data-category-name="development">
-                        <img src="static/images/h9.png" alt="MERN Stack Developer" class="course-image">
+                        <img src="{% static 'images/h9.png' %}" alt="MERN Stack Developer" class="course-image">
                         <div class="course-name">MERN Stack Developer</div>
                     </a>
 
                     <a href="{% url 'course_detail' slug='mobile-app-development' %}" class="course-card" data-category="development" data-category-name="development">
-                        <img src="static/images/h10.png" alt="Mobile App Development" class="course-image">
+                        <img src="{% static 'images/h10.png' %}" alt="Mobile App Development" class="course-image">
                         <div class="course-name">Mobile App Development</div>
                     </a>
 
                     <a href="{% url 'course_detail' slug='software-testing' %}" class="course-card" data-category="development" data-category-name="development">
-                        <img src="static/images/h11.png" alt="Software Testing" class="course-image">
+                        <img src="{% static 'images/h11.png' %}" alt="Software Testing" class="course-image">
                         <div class="course-name">Software Testing</div>
                     </a>
 
                     <a href="{% url 'course_detail' slug='front-end-developer' %}" class="course-card" data-category="development" data-category-name="development">
-                        <img src="static/images/h12.png" alt="Front-End Developer" class="course-image">
+                        <img src="{% static 'images/h12.png' %}" alt="Front-End Developer" class="course-image">
                         <div class="course-name">Front-End Developer</div>
                     </a>
             {% endif %}
 
             <div class="course-card" data-category="cloud" data-category-name="cloud" style="width:220px;height:260px;margin:24px;display:flex;flex-direction:column;align-items:center;justify-content:center;box-sizing:border-box;">
-                <img src="static/images/h16.png" alt="AWS" class="course-image">
+                <img src="{% static 'images/h16.png' %}" alt="AWS" class="course-image">
                 <div class="course-name">AWS</div>
             </div>
 
             <div class="course-card" data-category="business" data-category-name="business" style="width:220px;height:260px;margin:24px;display:flex;flex-direction:column;align-items:center;justify-content:center;box-sizing:border-box;">
-                <img src="static/images/h17.png" alt="Business Analytics" class="course-image">
+                <img src="{% static 'images/h17.png' %}" alt="Business Analytics" class="course-image">
                 <div class="course-name">Business Analytics</div>
             </div>
 
             <div class="course-card" data-category="marketing" data-category-name="marketing" style="width:220px;height:260px;margin:24px;display:flex;flex-direction:column;align-items:center;justify-content:center;box-sizing:border-box;">
-                <img src="static/images/h18.png" alt="Digital Marketing" class="course-image">
+                <img src="{% static 'images/h18.png' %}" alt="Digital Marketing" class="course-image">
                 <div class="course-name">Digital Marketing</div>
             </div>
         </div>
@@ -297,7 +297,7 @@
                 {% if learning_banner and learning_banner.image %}
                     <img src="{{ learning_banner.image.url }}" alt="{{ learning_banner.title }}" class="banner-image">
                 {% else %}
-                    <img src="static/images/h19.png" alt="Learning Together" class="banner-image">
+                    <img src="{% static 'images/h19.png' %}" alt="Learning Together" class="banner-image">
                 {% endif %}
             </div>
 
@@ -336,25 +336,25 @@
 
             <div class="instructors-grid">
                 <div class="instructor-card">
-                    <img src="static/images/h20.png" alt="Instructor" class="instructor-image">
+                    <img src="{% static 'images/h20.png' %}" alt="Instructor" class="instructor-image">
                     <h3 class="instructor-name">Jacob Jones</h3>
                     <p class="instructor-role">UI-UX Design Expert</p>
                 </div>
 
                 <div class="instructor-card">
-                    <img src="static/images/h21.png" alt="Instructor" class="instructor-image">
+                    <img src="{% static 'images/h21.png' %}" alt="Instructor" class="instructor-image">
                     <h3 class="instructor-name">Jacob Jones</h3>
                     <p class="instructor-role">UI-UX Design Expert</p>
                 </div>
 
                 <div class="instructor-card">
-                    <img src="static/images/h22.png" alt="Instructor" class="instructor-image">
+                    <img src="{% static 'images/h22.png' %}" alt="Instructor" class="instructor-image">
                     <h3 class="instructor-name">Jacob Jones</h3>
                     <p class="instructor-role">UI-UX Design Expert</p>
                 </div>
 
                 <div class="instructor-card">
-                    <img src="static/images/h23.png" alt="Instructor" class="instructor-image">
+                    <img src="{% static 'images/h23.png' %}" alt="Instructor" class="instructor-image">
                     <h3 class="instructor-name">Jacob Jones</h3>
                     <p class="instructor-role">UI-UX Design Expert</p>
                 </div>
@@ -463,8 +463,8 @@
                 <div class="certificate-image-wrapper">
                     {% if certificate_section.image %}
                         <img src="{{ certificate_section.image.url }}" alt="{{ certificate_section.title }}" class="certificate-image">
-                    {% else %}
-                        <img src="static/images/h24.png" alt="VTS Certificate" class="certificate-image">
+                        {% else %}
+                        <img src="{% static 'images/h24.png' %}" alt="VTS Certificate" class="certificate-image">
                     {% endif %}
                 </div>
             {% else %}
@@ -474,7 +474,7 @@
                     course completion certificate
                 </p>
                 <div class="certificate-image-wrapper">
-                    <img src="static/images/h24.png" alt="VTS Certificate" class="certificate-image">
+                    <img src="{% static 'images/h24.png' %}" alt="VTS Certificate" class="certificate-image">
                 </div>
             {% endif %}
         </div>

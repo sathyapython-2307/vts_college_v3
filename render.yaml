@@ -1,3 +1,22 @@
+services:
+  - type: web
+    name: vts-college-web
+    env: python
+    plan: starter
+    buildCommand: pip install -r requirements-pinned.txt && python manage.py migrate --noinput && python manage.py collectstatic --noinput
+    startCommand: gunicorn Online_Course.wsgi:application --bind 0.0.0.0:$PORT
+    healthCheckPath: /healthz/
+    envVars:
+      - key: SECRET_KEY
+        sync: false
+      - key: DEBUG
+        value: "False"
+      - key: ALLOWED_HOSTS
+      - key: DATABASE_URL
+
+# Note: This file is a template for Render. Add any additional services (e.g. managed postgres)
+# or environment variables in the Render dashboard. The buildCommand runs migrations and
+# collectstatic so deploys create missing tables and publish static assets.
 databases:
   - name: vts_college_db
     databaseName: vts_college
