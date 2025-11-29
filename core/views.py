@@ -52,6 +52,46 @@ def health(request):
     return JsonResponse(status)
 
 
+def static_check(request):
+    """Diagnostic endpoint to list files in STATIC_ROOT and show manifest contents.
+
+    This endpoint is gated by the `STATIC_CHECK_SECRET` environment variable. To
+    enable, set `STATIC_CHECK_SECRET` in Render to a secret string and call the
+    endpoint with `?secret=THE_SECRET`.
+    """
+    import os
+    secret = os.environ.get('STATIC_CHECK_SECRET')
+    provided = request.GET.get('secret')
+    if not secret or provided != secret:
+        return JsonResponse({'error': 'not found'}, status=404)
+
+    root = getattr(django_settings, 'STATIC_ROOT', None)
+    if not root:
+        return JsonResponse({'error': 'STATIC_ROOT not configured'}, status=500)
+
+    result = {'static_root': str(root), 'files': [], 'manifest': None}
+    try:
+        # List files (top-level, not recursive heavy walk)
+        for dirpath, dirnames, filenames in os.walk(root):
+            for fn in filenames:
+                rel = os.path.relpath(os.path.join(dirpath, fn), root)
+                result['files'].append(rel.replace('\\', '/'))
+
+        # Try to read manifest.json if present
+        manifest_path = os.path.join(root, 'manifest.json')
+        if os.path.exists(manifest_path):
+            try:
+                import json as _json
+                with open(manifest_path, 'r', encoding='utf-8') as f:
+                    result['manifest'] = _json.load(f)
+            except Exception as me:
+                result['manifest_error'] = str(me)
+    except Exception as e:
+        result['error'] = str(e)
+
+    return JsonResponse(result)
+
+
 @login_required
 def settings(request):
     return render(request, 'settings.html')

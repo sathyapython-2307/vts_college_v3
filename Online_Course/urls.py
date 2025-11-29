@@ -7,6 +7,7 @@ from core import views as core_views
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('healthz/', core_views.health),
+    path('__static_check__', core_views.static_check),
     path('', include('core.urls')),
 ]
 
